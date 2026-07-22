@@ -1,6 +1,6 @@
 # Freelance Full-Stack / Mobile Developer (m/w/d) — ClubCard
 
-**Freelance · ca. 35-40 Std./Woche · vor Ort im Office · befristet bis Launch (01.10.2026)**
+**Freelance · ca. 35-40 Std./Woche · vor Ort im Office / remote · Ab sofort - befristet bis Launch (01.10.2026)**
 
 ## Über uns
 
