@@ -1,146 +1,60 @@
 (function () {
   "use strict";
-  var APP_LINK = "https://clubcard.cc/app"; // Smartlink-Route: öffnet je nach Gerät den passenden Store
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  /* QR-Codes für Desktop-Besucher */
-  if (window.QRCode) {
-    document.querySelectorAll("[data-qr]").forEach(function (el) {
-      new window.QRCode(el, {
-        text: APP_LINK,
-        width: 160,
-        height: 160,
-        colorDark: "#181818",
-        colorLight: "#ffffff",
-        correctLevel: window.QRCode.CorrectLevel.M
-      });
+  /* Mitgliedskarte: kippt beim Scrollen und folgt dem Zeiger */
+  var card = document.querySelector("[data-tilt]");
+  if (card && !reduce) {
+    var px = 0, py = 0, ticking = false;
+    function render() {
+      ticking = false;
+      var r = card.getBoundingClientRect();
+      var vh = window.innerHeight || 800;
+      var p = Math.max(-1, Math.min(1, (r.top + r.height / 2 - vh / 2) / vh)); // -1 … 1
+      card.style.setProperty("--rz", (6 - (1 - Math.abs(p)) * 4 + p * 4).toFixed(2) + "deg");
+      card.style.setProperty("--rx", (p * 14 + py * -8).toFixed(2) + "deg");
+      card.style.setProperty("--ry", (px * 10).toFixed(2) + "deg");
+      card.style.setProperty("--sheen", (-20 + px * 30 - p * 30).toFixed(1) + "%");
+    }
+    function request() { if (!ticking) { ticking = true; requestAnimationFrame(render); } }
+    window.addEventListener("scroll", request, { passive: true });
+    window.addEventListener("resize", request);
+    card.parentElement.addEventListener("pointermove", function (e) {
+      var r = card.getBoundingClientRect();
+      px = (e.clientX - r.left) / r.width - 0.5;
+      py = (e.clientY - r.top) / r.height - 0.5;
+      request();
     });
+    card.parentElement.addEventListener("pointerleave", function () { px = 0; py = 0; request(); });
+    render();
   }
 
-  /* Live-Uhr auf dem Nachweis-Screen */
-  function pad(n) { return String(n).padStart(2, "0"); }
-  function tick() {
-    var d = new Date();
-    var t = pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
-    document.querySelectorAll("[data-clock]").forEach(function (el) { el.textContent = t; });
-  }
-  tick();
-  setInterval(tick, 1000);
-
-  /* Wischen zum Einlösen */
-  document.querySelectorAll(".swipe").forEach(function (track) {
-    var knob = track.querySelector(".swipe-knob");
-    var fill = track.querySelector(".swipe-fill");
-    var screen = track.closest(".screen");
-    var startX = 0, x = 0, max = 0, dragging = false;
-
-    function set(v) {
-      x = Math.max(0, Math.min(v, max));
-      knob.style.transform = "translateX(" + x + "px)";
-      fill.style.width = (x + 56) + "px";
-    }
-    function redeem() {
-      screen.classList.add("redeemed");
-      set(max);
-    }
-    function reset() {
-      screen.classList.remove("redeemed");
-      track.classList.remove("dragging");
-      set(0);
-    }
-
-    knob.addEventListener("pointerdown", function (e) {
-      max = track.clientWidth - knob.offsetWidth - 8;
-      startX = e.clientX - x;
-      dragging = true;
-      track.classList.add("dragging");
-      knob.setPointerCapture(e.pointerId);
-    });
-    knob.addEventListener("pointermove", function (e) {
-      if (dragging) set(e.clientX - startX);
-    });
-    function end() {
-      if (!dragging) return;
-      dragging = false;
-      track.classList.remove("dragging");
-      if (x > max * 0.82) redeem(); else set(0);
-    }
-    knob.addEventListener("pointerup", end);
-    knob.addEventListener("pointercancel", end);
-    knob.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight") {
-        e.preventDefault();
-        max = track.clientWidth - knob.offsetWidth - 8;
-        redeem();
-      }
-    });
-    var back = screen.querySelector("[data-reset]");
-    if (back) back.addEventListener("click", reset);
-  });
-
-  /* Preise: Standard / Studierende */
-  var toggle = document.querySelector("[data-plan-toggle]");
-  if (toggle) {
-    toggle.addEventListener("click", function (e) {
-      var btn = e.target.closest("button");
-      if (!btn) return;
-      var mode = btn.dataset.mode;
-      toggle.querySelectorAll("button").forEach(function (b) {
-        b.setAttribute("aria-pressed", String(b === btn));
-      });
-      document.querySelectorAll("[data-price]").forEach(function (el) {
-        el.textContent = el.dataset[mode];
-      });
-    });
+  /* Sticky-Leiste erscheint nach dem Hero (mobil) */
+  var bar = document.querySelector(".sticky-bar");
+  var hero = document.querySelector("[data-hero]");
+  var closing = document.querySelector("[data-closing]");
+  if (bar && hero && "IntersectionObserver" in window) {
+    var heroVisible = true, closingVisible = false;
+    var update = function () { bar.classList.toggle("show", !heroVisible && !closingVisible); };
+    new IntersectionObserver(function (e) { heroVisible = e[0].isIntersecting; update(); }).observe(hero);
+    if (closing) new IntersectionObserver(function (e) { closingVisible = e[0].isIntersecting; update(); }).observe(closing);
   }
 
-  /* Tabs auf der Partnerseite */
-  document.querySelectorAll("[role=tablist]").forEach(function (list) {
-    var tabs = list.querySelectorAll("[role=tab]");
-    tabs.forEach(function (tab) {
-      tab.addEventListener("click", function () {
-        tabs.forEach(function (t) {
-          var on = t === tab;
-          t.setAttribute("aria-selected", String(on));
-          document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
-        });
-      });
+  /* „Android? Trag dich ein“ öffnet die passende FAQ-Antwort */
+  document.querySelectorAll("[data-open]").forEach(function (link) {
+    link.addEventListener("click", function () {
+      var target = document.getElementById(link.dataset.open);
+      if (target) target.open = true;
     });
   });
 
-  /* Regler: Wie oft pro Gast / Wie viele pro Tag */
-  var freq = ["täglich", "alle 7 Tage", "alle 14 Tage", "alle 30 Tage"];
-  var f = document.getElementById("ctl-freq");
-  var q = document.getElementById("ctl-quota");
-  function syncControls() {
-    if (f) document.querySelectorAll("[data-freq]").forEach(function (el) { el.textContent = freq[+f.value]; });
-    if (q) document.querySelectorAll("[data-quota]").forEach(function (el) { el.textContent = q.value; });
-  }
-  if (f) f.addEventListener("input", syncControls);
-  if (q) q.addEventListener("input", syncControls);
-  syncControls();
-
-  /* Partner-Formular: noch ohne Backend */
-  var form = document.getElementById("pform");
-  if (form) {
+  /* Formulare: noch ohne Backend, also ehrlich sagen, dass nichts verschickt wurde */
+  document.querySelectorAll("form[data-demo]").forEach(function (form) {
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       if (!form.reportValidity()) return;
-      form.classList.add("sent");
-    });
-    form.addEventListener("change", function () {
-      var guest = form.querySelector("input[name=typ][value=gast]");
-      document.getElementById("guest-note").hidden = !(guest && guest.checked);
-    });
-  }
-
-  /* Kopieren von Kontaktdaten */
-  document.querySelectorAll("[data-copy]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var text = btn.dataset.copy;
-      var done = function () { btn.textContent = "Kopiert"; setTimeout(function () { btn.textContent = "Kopieren"; }, 1600); };
-      try {
-        navigator.clipboard.writeText(text).then(done, function () {});
-      } catch (err) { /* Fallback: Text ist per user-select: all markierbar */ }
+      var msg = form.querySelector("[data-msg]");
+      if (msg) msg.hidden = false;
     });
   });
 })();

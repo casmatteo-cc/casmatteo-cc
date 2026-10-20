@@ -1,19 +1,23 @@
-# ClubCard Website (Redesign-Entwurf)
+# ClubCard Website (Relaunch nach Figma)
 
-Statischer Entwurf für clubcard.cc: zwei Seiten, kein Build-Schritt.
+Statische Umsetzung von Figma „Website-Redesign (Okt 2026)“, Datei `CqweV56v5nnzkn10hbzztx`:
 
-- `index.html`: Startseite für Mitglieder, Ziel ist der App-Download
-- `partner.html`: Partnerseite (`/partner`), Ziel ist ein Gespräch mit Partnern
-- `styles.css`, `main.js`: gemeinsames Design und Interaktionen (Swipe-Demo, Preis-Umschalter, Tabs, Regler, QR-Code)
-- `assets/`: Logo und Icon aus dem Brandbook v3
+- `index.html`: Startseite v3 (17.10.2026). Ein Ziel: App laden. Keine Preise außer „Erster Monat gratis“.
+- `partner.html`: Partnerseite v2. Ziel: Gesprächsanfrage an Louis.
+- `styles.css`, `main.js`: gemeinsames Design und Interaktionen. Die Mitgliedskarte kippt beim Scrollen und folgt dem Zeiger. Dazu kommen die Sticky-Leiste auf dem Handy, der Partner-Laufband und die Formulare.
+- `assets/`: Logos aus dem Brandbook. Die App-Screens, die Partnerkarte, der Kartenfächer und die Partnerbilder sind Renderings aus Figma (1x).
 
 `index.html` ist für die Artifact-Vorschau ohne `<html>`/`<head>`-Gerüst geschrieben. Für den Einbau in `clubcard-website` (TanStack Start + Tailwind) dienen beide Seiten als Vorlage.
 
-Quellen: Brandbook v3, „Website-Texte (Neufassung)“, Wireframe „Startseite · Desktop“, Prototyp der Partnerseite.
+## Bewusst anders als Figma
 
-Vor dem Livegang prüfen:
-- Store-Links zeigen auf die Smartlink-Route `https://clubcard.cc/app`
-- Preise kommen aus dem Wireframe; den Studierenden-Preis für 6 und 12 Monate bestätigen
-- Partner-Login-URL, Links zu Impressum, AGB und Datenschutz sowie das Instagram-Handle fehlen noch
-- Das Partner-Formular schickt noch nichts ab und muss an die API angebunden werden
-- Die Venue-Bilder sind Platzhalter-Verläufe; echte Partnerfotos folgen
+- Die Mitgliedskarte ist in CSS gebaut statt als Bild. So bleibt sie scharf und kann kippen.
+- Die Partnerkarte ist ein statisches Bild. Laut Notiz kommen die Pins live aus `GET /venues` (z. B. MapLibre).
+- Die Sektion „Was die Läden sagen“ fehlt, weil die Zitate in Figma noch Platzhalter sind.
+- Die Partnerseite hat zusätzlich „Euer Team schaut nur drauf.“ (Kartenfächer) und direkte Kontaktdaten.
+
+## Vor dem Livegang
+
+- Die Figma-Renderings in 2x neu exportieren, sobald die Assets direkt heruntergeladen werden können.
+- Die FAQ-Antworten außer „Was ist ClubCard?“ bzw. „Was kostet das?“ habe ich geschrieben. Sie stehen nicht in Figma und müssen gegengelesen werden.
+- Offen sind noch: die Android-Warteliste und das Partner-Formular (beide ohne Backend), die Partner-Login-URL, die Veedel-Seiten und die Rechtstexte.
